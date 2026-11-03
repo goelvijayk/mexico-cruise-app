@@ -1,0 +1,5 @@
+.env
+*.iml
+.dart_tool/
+.packages
+build/

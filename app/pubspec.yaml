@@ -1,0 +1,39 @@
+name: mexico_cruise
+description: Offline-first Mexico family cruise itinerary.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.6.1
+  drift: ^2.28.1
+  sqlite3_flutter_libs: ^0.5.34
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  supabase_flutter: ^2.9.1
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  timezone: ^0.10.0
+  flutter_dotenv: ^5.2.1
+  equatable: ^2.0.7
+  collection: ^1.19.1
+  crypto: ^3.0.6
+  url_launcher: ^6.3.2
+  share_plus: ^10.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.28.1
+  build_runner: ^2.4.15
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env.example
