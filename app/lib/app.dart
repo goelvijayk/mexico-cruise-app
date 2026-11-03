@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mexico_cruise/data/bundle/bundle_service.dart';
 import 'package:mexico_cruise/features/event_detail/event_detail_screen.dart';
 import 'package:mexico_cruise/features/event_form/event_form_screen.dart';
 import 'package:mexico_cruise/features/inbox/inbox_screen.dart';
@@ -9,6 +12,9 @@ import 'package:mexico_cruise/features/documents/documents_screen.dart';
 import 'package:mexico_cruise/features/timeline/timeline_screen.dart';
 import 'package:mexico_cruise/data/sync/refresh_progress.dart';
 import 'package:mexico_cruise/providers/app_providers.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -133,6 +139,14 @@ class _AppShellState extends ConsumerState<AppShell> {
                     Text(state.error.toString(), style: const TextStyle(color: Colors.red)),
                   if (state.hasValue && state.value != null)
                     Text(state.value!.message),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: state.isLoading
+                        ? null
+                        : () => _shareNearbyPhone(context, ref),
+                    icon: const Icon(Icons.share),
+                    label: const Text('Share to nearby phone'),
+                  ),
                 ],
               ),
             );
@@ -140,6 +154,29 @@ class _AppShellState extends ConsumerState<AppShell> {
         );
       },
     );
+  }
+}
+
+Future<void> _shareNearbyPhone(BuildContext context, WidgetRef ref) async {
+  try {
+    final db = ref.read(databaseProvider);
+    final base = await getApplicationDocumentsDirectory();
+    final svc = BundleService(
+      db: db,
+      docsDirectory: Directory(p.join(base.path, 'docs')),
+      exportDirectory: Directory(p.join(base.path, 'exports')),
+    );
+    final result = await svc.exportBundle(includeDocuments: true);
+    await Share.shareXFiles(
+      [XFile(result.file.path, mimeType: 'application/zip')],
+      text: 'Mexico Cruise ${result.file.uri.pathSegments.last}',
+    );
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Share failed: $e')),
+      );
+    }
   }
 }
 

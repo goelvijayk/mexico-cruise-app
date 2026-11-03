@@ -41,6 +41,7 @@ See **`supabase/README.md`**: Supabase CLI + Docker, `supabase db push`, Auth us
 ## Sync model
 
 - **Refresh**: push outbox patches → `apply_field_patches`; pull rows with `updated_at > last_pulled_at`; download attachments (when online).
+- **Share to nearby phone**: export `trip-<date>.cruisebundle` (zip: manifest, events, attachments metadata, ingested emails, revision requests, cached PDFs) via Android share sheet; Settings or post-Refresh sheet. Import merges into local SQLite with LWW rules so an offline phone gets events and documents without internet.
 - **Field merge**: per-column LWW using `events.field_meta` (see `supabase/README.md`).
 - **Ingestion**: row upsert via `apply_changes('events', …)`; never overwrites `notes` or `edited_fields` on conflict (`supabase/INGESTION_CONTRACT.md`).
 
