@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:mexico_cruise/config/app_config.dart';
 import 'package:mexico_cruise/data/db/app_database.dart';
+import 'package:mexico_cruise/data/sync/attachment_downloader.dart';
+import 'package:mexico_cruise/data/sync/refresh_progress.dart';
 import 'package:mexico_cruise/domain/merge/field_merge.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RefreshSummary {
@@ -12,6 +17,8 @@ class RefreshSummary {
     required this.patchesAccepted,
     required this.patchesRejected,
     required this.attachmentsDownloaded,
+    required this.attachmentBytesDownloaded,
+    required this.attachmentsFailed,
     required this.message,
   });
 
@@ -19,34 +26,50 @@ class RefreshSummary {
   final int patchesAccepted;
   final int patchesRejected;
   final int attachmentsDownloaded;
+  final int attachmentBytesDownloaded;
+  final int attachmentsFailed;
   final String message;
 }
+
+typedef ProgressCallback = void Function(RefreshProgress progress);
 
 class SyncService {
   SyncService({
     required AppDatabase db,
     required AppConfig config,
     SupabaseClient? client,
+    AttachmentDownloader Function(Directory docsDir, StorageBytesFetcher fetch)?
+        attachmentDownloaderFactory,
   })  : _db = db,
         _config = config,
-        _client = client;
+        _client = client,
+        _attachmentDownloaderFactory = attachmentDownloaderFactory;
 
   final AppDatabase _db;
   final AppConfig _config;
   final SupabaseClient? _client;
+  final AttachmentDownloader Function(Directory docsDir, StorageBytesFetcher fetch)?
+      _attachmentDownloaderFactory;
 
-  Future<RefreshSummary> refresh({required String deviceNickname}) async {
+  Future<RefreshSummary> refresh({
+    required String deviceNickname,
+    ProgressCallback? onProgress,
+  }) async {
     if (!_config.hasBackend || _client == null) {
       final summary = RefreshSummary(
         eventsUpdated: 0,
         patchesAccepted: 0,
         patchesRejected: 0,
         attachmentsDownloaded: 0,
+        attachmentBytesDownloaded: 0,
+        attachmentsFailed: 0,
         message: 'Local-only mode (no Supabase configured)',
       );
       await _persistSummary(summary);
       return summary;
     }
+
+    onProgress?.call(const RefreshProgress(phase: 'signing_in'));
 
     try {
       await _client.auth.refreshSession();
@@ -64,6 +87,11 @@ class SyncService {
     }
 
     final pullCursor = parseSyncCursor(await _db.syncValue('last_pulled_at'));
+
+    onProgress?.call(const RefreshProgress(
+      phase: 'pushing',
+      detail: 'Sending your changes',
+    ));
 
     final patches = await _db.select(_db.syncOutbox).get();
     patches.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
@@ -98,6 +126,11 @@ class SyncService {
             .go();
       }
     }
+
+    onProgress?.call(const RefreshProgress(
+      phase: 'pulling',
+      detail: 'Getting updates',
+    ));
 
     final since =
         (pullCursor ?? DateTime.fromMillisecondsSinceEpoch(0)).toUtc();
@@ -166,22 +199,81 @@ class SyncService {
       eventsUpdated++;
     }
 
+    final remoteAttachments = await _client
+        .from('attachments')
+        .select()
+        .gt('updated_at', since.toIso8601String());
+
+    final docsDir = await _docsDirectory();
+    final client = _client;
+    Future<List<int>> fetchBytes(String storagePath) =>
+        client.storage.from('trip-docs').download(storagePath);
+    final downloader = _attachmentDownloaderFactory?.call(docsDir, fetchBytes) ??
+        AttachmentDownloader(
+          db: _db,
+          fetchBytes: fetchBytes,
+          docsDirectory: docsDir,
+        );
+
+    for (final row in remoteAttachments as List<dynamic>) {
+      await downloader.upsertFromRemoteRow(Map<String, dynamic>.from(row as Map));
+    }
+
     await _db.setSyncValue('last_pulled_at', formatSyncCursor(serverTime));
 
+    onProgress?.call(const RefreshProgress(
+      phase: 'downloading',
+      detail: 'Downloading documents',
+      downloadIndex: 0,
+      downloadTotal: 0,
+    ));
+
+    var attachmentBytes = 0;
+    var attachmentsDownloaded = 0;
+    var attachmentsFailed = 0;
+
+    final downloadResult = await downloader.downloadPending(
+      onProgress: (index, total, bytesSoFar) {
+        attachmentBytes = bytesSoFar;
+        onProgress?.call(RefreshProgress(
+          phase: 'downloading',
+          detail: 'Downloading documents $index/$total',
+          downloadIndex: index,
+          downloadTotal: total,
+          bytesDownloaded: bytesSoFar,
+        ));
+      },
+    );
+    attachmentsDownloaded = downloadResult.downloaded;
+    attachmentsFailed = downloadResult.failed;
+    attachmentBytes = downloadResult.bytesDownloaded;
+
+    final mb = (attachmentBytes / (1024 * 1024)).toStringAsFixed(0);
     final summary = RefreshSummary(
       eventsUpdated: eventsUpdated,
       patchesAccepted: accepted.length,
       patchesRejected: rejected.length,
-      attachmentsDownloaded: 0,
+      attachmentsDownloaded: attachmentsDownloaded,
+      attachmentBytesDownloaded: attachmentBytes,
+      attachmentsFailed: attachmentsFailed,
       message:
-          '$eventsUpdated events updated · ${accepted.length} patches sent · ${rejected.length} rejected',
+          '$eventsUpdated events · $attachmentsDownloaded docs ($mb MB) · '
+          '${accepted.length} patches sent',
     );
     await _persistSummary(summary);
     return summary;
   }
 
+  Future<Directory> _docsDirectory() async {
+    final base = await getApplicationDocumentsDirectory();
+    return Directory(p.join(base.path, 'docs'));
+  }
+
   Future<void> _persistSummary(RefreshSummary summary) async {
-    await _db.setSyncValue('last_refresh_at', DateTime.now().toUtc().toIso8601String());
+    await _db.setSyncValue(
+      'last_refresh_at',
+      DateTime.now().toUtc().toIso8601String(),
+    );
     await _db.setSyncValue('last_refresh_summary', summary.message);
   }
 }

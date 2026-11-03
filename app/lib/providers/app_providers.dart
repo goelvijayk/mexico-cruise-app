@@ -3,6 +3,7 @@ import 'package:mexico_cruise/config/app_config.dart';
 import 'package:mexico_cruise/data/db/app_database.dart';
 import 'package:mexico_cruise/data/local/seed_local.dart';
 import 'package:mexico_cruise/data/repositories/event_repository.dart';
+import 'package:mexico_cruise/data/sync/refresh_progress.dart';
 import 'package:mexico_cruise/data/sync/sync_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,6 +20,9 @@ final supabaseClientProvider = Provider<SupabaseClient?>((ref) => null);
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
   return EventRepository(ref.watch(databaseProvider));
 });
+
+final refreshProgressProvider =
+    StateProvider<RefreshProgress?>((ref) => null);
 
 final syncServiceProvider = Provider<SyncService>((ref) {
   final config = ref.watch(appConfigProvider);
@@ -86,15 +90,20 @@ class RefreshController extends StateNotifier<AsyncValue<RefreshSummary?>> {
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
+    _ref.read(refreshProgressProvider.notifier).state = null;
     try {
       final nickname =
           await _ref.read(databaseProvider).syncValue('device_nickname') ??
               'Traveler';
       final summary = await _ref.read(syncServiceProvider).refresh(
             deviceNickname: nickname,
+            onProgress: (p) =>
+                _ref.read(refreshProgressProvider.notifier).state = p,
           );
+      _ref.read(refreshProgressProvider.notifier).state = null;
       state = AsyncValue.data(summary);
     } catch (e, st) {
+      _ref.read(refreshProgressProvider.notifier).state = null;
       state = AsyncValue.error(e, st);
     }
   }

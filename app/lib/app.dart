@@ -7,6 +7,7 @@ import 'package:mexico_cruise/features/onboarding/onboarding_screen.dart';
 import 'package:mexico_cruise/features/settings/settings_screen.dart';
 import 'package:mexico_cruise/features/documents/documents_screen.dart';
 import 'package:mexico_cruise/features/timeline/timeline_screen.dart';
+import 'package:mexico_cruise/data/sync/refresh_progress.dart';
 import 'package:mexico_cruise/providers/app_providers.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -108,6 +109,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             if (!state.isLoading && state.valueOrNull == null) {
               Future.microtask(() => ref.read(refreshControllerProvider.notifier).refresh());
             }
+            final progress = ref.watch(refreshProgressProvider);
             return Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -117,6 +119,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                   Text('Refreshing', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 12),
                   if (state.isLoading) const LinearProgressIndicator(),
+                  if (progress != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_phaseLabel(progress)),
+                    if (progress.downloadTotal != null &&
+                        progress.downloadTotal! > 0)
+                      Text(
+                        'Documents ${progress.downloadIndex}/${progress.downloadTotal}'
+                        '${progress.bytesDownloaded != null ? ' · ${(progress.bytesDownloaded! / (1024 * 1024)).toStringAsFixed(0)} MB' : ''}',
+                      ),
+                  ],
                   if (state.hasError)
                     Text(state.error.toString(), style: const TextStyle(color: Colors.red)),
                   if (state.hasValue && state.value != null)
@@ -128,6 +140,21 @@ class _AppShellState extends ConsumerState<AppShell> {
         );
       },
     );
+  }
+}
+
+String _phaseLabel(RefreshProgress p) {
+  switch (p.phase) {
+    case 'signing_in':
+      return 'Signing in…';
+    case 'pushing':
+      return p.detail ?? 'Sending your changes…';
+    case 'pulling':
+      return p.detail ?? 'Getting updates…';
+    case 'downloading':
+      return p.detail ?? 'Downloading documents…';
+    default:
+      return p.detail ?? p.phase;
   }
 }
 

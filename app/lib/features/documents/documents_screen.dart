@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mexico_cruise/data/db/app_database.dart';
+import 'package:mexico_cruise/features/documents/document_viewer.dart';
 import 'package:mexico_cruise/providers/app_providers.dart';
 
 class DocumentsScreen extends ConsumerWidget {
@@ -48,17 +49,7 @@ class DocumentsScreen extends ConsumerWidget {
                           subtitle: Text(
                             '${(a.sizeBytes / (1024 * 1024)).toStringAsFixed(1)} MB · ${a.downloadState}',
                           ),
-                          onTap: () {
-                            if (a.downloadState != 'done') {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Not downloaded — Refresh on Wi‑Fi',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
+                          onTap: () => openCachedDocument(context, a),
                         );
                       },
                     ),
