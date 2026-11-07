@@ -1,0 +1,19 @@
+{
+  "gmailMessageId": "msg-cruise-carnival-003",
+  "threadId": "thread-003",
+  "fromAddr": "donotreply@carnival.com",
+  "subject": "Carnival Booking 9X88YY — Mexico Cruise",
+  "receivedAt": "2026-10-20T14:30:00.000Z",
+  "snippet": "Carnival booking",
+  "bodyText": "Carnival Panorama\nEmbarkation Long Beach Dec 5 2026 boarding 11:30 AM - 3:30 PM\nCabin E142 Deck 8\nBooking 9X88YY",
+  "gmailLink": "https://mail.google.com/mail/u/0/#inbox/msg-cruise-carnival-003",
+  "attachments": [
+    {
+      "name": "fun-pass.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 45000,
+      "gmailAttachmentId": "msg-cruise-carnival-003:0",
+      "bytes": "JVBERi0xLjQK"
+    }
+  ]
+}

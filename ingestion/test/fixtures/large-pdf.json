@@ -1,0 +1,19 @@
+{
+  "gmailMessageId": "msg-large-pdf-007",
+  "threadId": "thread-007",
+  "fromAddr": "documents@cruise.com",
+  "subject": "Scanned boarding packet (large PDF)",
+  "receivedAt": "2026-10-21T12:00:00.000Z",
+  "snippet": "Large attachment",
+  "bodyText": "Your boarding documents are attached. Because the scan is large, open the Gmail link if the app shows a link instead of the file.",
+  "gmailLink": "https://mail.google.com/mail/u/0/#inbox/msg-large-pdf-007",
+  "attachments": [
+    {
+      "name": "boarding-scan.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 52428801,
+      "gmailAttachmentId": "msg-large-pdf-007:0",
+      "bytes": "JVBERi0xLjQK"
+    }
+  ]
+}

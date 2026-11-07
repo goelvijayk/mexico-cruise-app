@@ -1,0 +1,19 @@
+{
+  "gmailMessageId": "msg-airline-delta-001",
+  "threadId": "thread-001",
+  "fromAddr": "noreply@delta.com",
+  "subject": "Your Flight Confirmation — ABCDEF",
+  "receivedAt": "2026-10-15T18:22:00.000Z",
+  "snippet": "Your Flight Confirmation",
+  "bodyText": "Delta Air Lines confirmation ABCDEF\nFlight DL 1234\nDepart Chicago O'Hare (ORD) Dec 1 2026 6:15 AM CST\nArrive Los Angeles (LAX) Dec 1 2026 9:05 AM PST\nPassengers: Alex Smith, Jordan Smith",
+  "gmailLink": "https://mail.google.com/mail/u/0/#inbox/msg-airline-delta-001",
+  "attachments": [
+    {
+      "name": "itinerary.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 1200,
+      "gmailAttachmentId": "msg-airline-delta-001:0",
+      "bytes": "JVBERi0xLjQK"
+    }
+  ]
+}

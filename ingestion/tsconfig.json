@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["lib/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"],
+  "exclude": ["gas/**", "dist/**", "node_modules/**"]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@mexico-cruise/ingestion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gmail → Gemini → Supabase ingestion for Mexico Cruise app",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint lib gas test --ext .ts",
+    "test": "vitest run",
+    "push": "npm run build && clasp push"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.5.0",
+    "@types/google-apps-script": "^1.0.100",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.16.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0",
+    "vitest": "^2.1.8"
+  }
+}

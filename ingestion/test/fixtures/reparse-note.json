@@ -1,0 +1,11 @@
+{
+  "gmailMessageId": "msg-reparse-note-008",
+  "threadId": "thread-008",
+  "fromAddr": "noreply@delta.com",
+  "subject": "Updated itinerary — ABCDEF",
+  "receivedAt": "2026-10-25T10:00:00.000Z",
+  "snippet": "Schedule change",
+  "bodyText": "Schedule change for confirmation ABCDEF\nFlight DL 1234 now departs Dec 1 2026 7:15 AM CST (was 6:15 AM).",
+  "gmailLink": "https://mail.google.com/mail/u/0/#inbox/msg-reparse-note-008",
+  "attachments": []
+}
